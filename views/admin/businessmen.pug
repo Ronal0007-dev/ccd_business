@@ -1,0 +1,70 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 📋 Businessman Registry
+    .page-actions
+      if user.role === 'admin'
+        button.btn.btn-print(onclick="window.print()") 🖨 Print List
+      a.btn.btn-secondary(href="/businessmen/add") ➕ Add New
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+  if success && success.length
+    .alert.alert-success ✓ #{success[0]}
+
+  .table-wrapper
+    table.data-table
+      thead
+        tr
+          th #
+          th Full Name
+          th Gender
+          th NIN
+          th Mobile
+          th Business Type
+          th Location
+          th Registered By
+          th Actions
+      tbody
+        if businessmen.length === 0
+          tr
+            td(colspan="10").empty-cell No records found.
+        else
+          each biz, i in businessmen
+            tr
+              td= i + 1
+              td= biz.fullName
+              td
+                span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')
+                  = biz.gender
+              td.nin-cell= biz.nin
+              td= biz.mobileNumber
+              td= biz.businessType
+              td
+                if biz.location
+                  div= biz.location.locationName
+                  small.text-muted= biz.location.ward
+              td
+                if biz.registrar
+                  = biz.registrar.fullName
+                else
+                  span.text-muted N/A
+              td
+                .action-buttons
+                  a.btn.btn-sm.btn-view(href="/businessmen/" + biz.id) 👁 View
+                  if user.role === 'admin'
+                    a.btn.btn-sm.btn-edit(href="/businessmen/" + biz.id + "/edit") ✏️
+                    form(action="/businessmen/" + biz.id + "?_method=DELETE" method="POST" style="display:inline"
+                      onsubmit="return confirm('Delete this record?')")
+                      input(type="hidden" name="_method" value="DELETE")
+                      button.btn.btn-sm.btn-danger(type="submit") 🗑
+
+block head
+  style.
+    @media print {
+      .navbar, .page-actions, .no-print, .alert { display: none !important; }
+      .page-title { margin-bottom: 10px; }
+      .table-wrapper { overflow: visible; }
+      table { font-size: 11px; }
+    }

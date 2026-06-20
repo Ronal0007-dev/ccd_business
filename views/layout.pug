@@ -1,0 +1,49 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= title + ' — Dodoma City Council | CCD'
+    link(rel="stylesheet" href="/css/style.css")
+    block head
+  body
+    if user
+      nav.navbar
+        .navbar-left
+          .navbar-brand
+            img.nav-logo(src="/img/logo.jpg" alt="CCD Logo")
+            .brand-text
+              span.brand-title Business Registry
+              span.brand-sub City Council of Dodoma
+          ul.nav-links
+            li
+              a(href="/dashboard" class=(title.includes('Dashboard') ? 'active' : ''))
+                span.nav-icon 🏠
+                span Dashboard
+            li
+              a(href="/businessmen" class=(title.includes('Businessmen') || title.includes('Businessman') ? 'active' : ''))
+                span.nav-icon 👔
+                span Businessmen
+            if user.role === 'admin'
+              li
+                a(href="/locations" class=(title.includes('Locations') ? 'active' : ''))
+                  span.nav-icon 📍
+                  span Locations
+              li
+                a(href="/users" class=(title.includes('User') ? 'active' : ''))
+                  span.nav-icon 👥
+                  span Users
+        .navbar-right
+          .user-info
+            span.user-badge(class= user.role === 'admin' ? 'badge-admin' : 'badge-entry')
+              = user.role === 'admin' ? '👑 Admin' : '✏️ Data Entry'
+            .user-details
+              span.user-name= user.fullName
+          a.btn-change-pw(href="/auth/change-password" title="Change Password") 🔑
+          a.btn-logout(href="/auth/logout") Sign Out
+
+    .container
+      block content
+
+    block scripts
+    script(src="/js/main.js")

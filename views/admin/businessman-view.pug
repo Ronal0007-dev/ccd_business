@@ -1,0 +1,73 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 👁 Businessman Details
+    .page-actions
+      a.btn.btn-outline(href="/businessmen") ← Back to List
+      if user.role === 'admin'
+        a.btn.btn-secondary(href="/businessmen/" + biz.id + "/edit") ✏️ Edit
+        button.btn.btn-print(onclick="window.print()") 🖨 Print
+        form(action="/businessmen/" + biz.id + "?_method=DELETE" method="POST" style="display:inline"
+          onsubmit="return confirm('Delete this record permanently?')")
+          input(type="hidden" name="_method" value="DELETE")
+          button.btn.btn-danger(type="submit") 🗑 Delete
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+  if success && success.length
+    .alert.alert-success ✓ #{success[0]}
+
+  .detail-card
+    .detail-card-header
+      .detail-avatar
+        = biz.gender === 'Male' ? '👨' : '👩'
+      .detail-heading
+        h2= biz.fullName
+        .detail-meta
+          span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')
+            = biz.gender
+          if biz.location
+            span.location-tag 📍 #{biz.location.locationName}
+
+    .detail-body
+      .detail-grid
+        .detail-item
+          .detail-label NIN
+          .detail-value.mono= biz.nin
+        .detail-item
+          .detail-label Age
+          .detail-value= biz.age + ' years'
+        .detail-item
+          .detail-label Mobile Number
+          .detail-value= biz.mobileNumber
+        .detail-item
+          .detail-label TIN #
+          .detail-value= biz.tin || '— Not provided —'
+        .detail-item
+          .detail-label Type of Business
+          .detail-value= biz.businessType
+        if biz.location
+          .detail-item
+            .detail-label Location
+            .detail-value= biz.location.locationName
+          .detail-item
+            .detail-label Ward
+            .detail-value= biz.location.ward
+        .detail-item.highlight-item
+          .detail-label Registered By
+          .detail-value
+            if biz.registrar
+              strong= biz.registrar.fullName
+              span.text-muted  (@#{biz.registrar.username})
+            else
+              span Unknown
+        .detail-item
+          .detail-label Registration Date
+          .detail-value= new Date(biz.createdAt).toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'})
+
+block head
+  style.
+    @media print {
+      .navbar, .page-actions, .no-print { display: none !important; }
+    }

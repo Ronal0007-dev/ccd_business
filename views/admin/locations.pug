@@ -1,0 +1,53 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 📍 Business Locations
+    a.btn.btn-outline(href="/dashboard") ← Back to Dashboard
+
+  if error && error.length
+    .alert.alert-error= error[0]
+  if success && success.length
+    .alert.alert-success= success[0]
+
+  .section-card
+    .section-card-header
+      h2 Add New Location
+    .section-card-body
+      form.inline-form(action="/locations" method="POST")
+        .form-row
+          .form-group
+            label Location Name *
+            input(type="text" name="locationName" placeholder="e.g. Kariakoo Market" required)
+          .form-group
+            label Ward *
+            input(type="text" name="ward" placeholder="e.g. Kariakoo Ward" required)
+          .form-group.form-action
+            button.btn.btn-primary(type="submit") ➕ Add Location
+
+  h2.section-title All Locations (#{locations.length})
+
+  if locations.length === 0
+    .empty-state
+      .empty-icon 📍
+      p No locations registered yet. Add one above.
+  else
+    .cards-grid
+      each loc in locations
+        .location-card
+          .location-card-header
+            .location-icon 📍
+            .location-info
+              h3.location-name= loc.locationName
+              .location-ward 🏘️ #{loc.ward}
+          .location-card-body
+            .location-stat
+              span.stat-num= loc.businessmen ? loc.businessmen.length : 0
+              span.stat-lbl Businessmen
+            if loc.creator
+              .location-creator Added by: #{loc.creator.fullName}
+          .location-card-footer
+            form(action="/locations/" + loc.id + "?_method=DELETE" method="POST" 
+              onsubmit="return confirm('Delete this location? All associated businessmen will also be removed.')")
+              input(type="hidden" name="_method" value="DELETE")
+              button.btn.btn-danger.btn-sm(type="submit") 🗑 Delete

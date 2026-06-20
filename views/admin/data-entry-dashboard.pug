@@ -1,0 +1,50 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title ✏️ Data Entry Dashboard
+    p.page-subtitle Welcome, #{user.fullName}
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+  if success && success.length
+    .alert.alert-success ✓ #{success[0]}
+
+  .stats-grid
+    .stat-card.stat-blue
+      .stat-icon 📍
+      .stat-info
+        .stat-number= stats.totalLocations
+        .stat-label Business Locations
+    .stat-card.stat-green
+      .stat-icon 👔
+      .stat-info
+        .stat-number= stats.totalBusinessmen
+        .stat-label Total Businessmen
+
+  .quick-actions
+    h2.section-title Quick Actions
+    .action-grid
+      a.action-card(href="/businessmen/add")
+        .action-icon ➕
+        .action-label Register Businessman
+        .action-desc Add a new businessman to the registry
+      a.action-card(href="/businessmen")
+        .action-icon 📋
+        .action-label View All Businessmen
+        .action-desc Browse and view all registered businessmen
+
+  .section-card
+    .section-card-header
+      h2 ➕ Add New Business Location
+    .section-card-body
+      form.inline-form(action="/locations" method="POST")
+        .form-row
+          .form-group
+            label Location Name *
+            input(type="text" name="locationName" placeholder="e.g. Kariakoo Market" required)
+          .form-group
+            label Ward *
+            input(type="text" name="ward" placeholder="e.g. Kariakoo Ward" required)
+          .form-group.form-action
+            button.btn.btn-primary(type="submit") ➕ Add Location

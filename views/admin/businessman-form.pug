@@ -1,0 +1,176 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title= isEdit ? '✏️ Edit Businessman' : '➕ Register Businessman'
+    a.btn.btn-outline(href="/businessmen") ← Back to List
+
+  if error && error.length
+    .alert.alert-error= error[0]
+
+  .section-card
+    .section-card-body
+      form#bizForm
+        input(type="hidden" name="_method" value=isEdit ? 'PUT' : 'POST')
+        input(type="hidden" name="recordId" value=businessman.id || '')
+
+        .form-grid
+          .form-group
+            label Location *
+            select(name="locationId" required)
+              option(value="") — Select Location —
+              each loc in locations
+                option(value=loc.id selected=(businessman.locationId == loc.id))
+                  = loc.locationName + ' (' + loc.ward + ')'
+
+          .form-group
+            label Full Name *
+            input(type="text" name="fullName" value=businessman.fullName || '' required)
+
+          .form-group
+            label Gender *
+            select(name="gender" required)
+              option(value="") — Select —
+              option(value="Male" selected=(businessman.gender === 'Male')) Male
+              option(value="Female" selected=(businessman.gender === 'Female')) Female
+
+          .form-group
+            label NIN * (Format: XXXXXXXX-XXXXX-XXXXX-XX)
+            input#ninInput(type="text" name="nin" value=businessman.nin || ''
+              placeholder="12345678-12345-12345-12"
+              pattern="\\d{8}-\\d{5}-\\d{5}-\\d{2}" maxlength="25" required)
+            small.field-hint First 4 digits = birth year, used to auto-calculate age
+
+          .form-group
+            label Age (Auto-calculated from NIN)
+            input#ageDisplay(type="number" value=businessman.age || '' readonly disabled)
+            input#ageHidden(type="hidden" name="age" value=businessman.age || '')
+
+          .form-group
+            label TIN # (Optional)
+            input(type="text" name="tin" value=businessman.tin || '' placeholder="Tax Identification Number")
+
+          .form-group
+            label Mobile Number *
+            input(type="text" name="mobileNumber" value=businessman.mobileNumber || '' placeholder="0712345678" required)
+
+          .form-group
+            label Type of Business *
+            input(type="text" name="businessType" value=businessman.businessType || ''
+              placeholder="e.g. Retail Shop, Food Vendor" required)
+
+        .form-actions
+          button#submitBtn.btn.btn-primary.btn-lg(type="submit")
+            = isEdit ? '💾 Update Record' : '💾 Register Businessman'
+          a.btn.btn-outline(href="/businessmen") Cancel
+
+  //- Success Modal
+  #successModal.modal(style="display:none")
+    .modal-overlay
+      .modal-box.modal-success
+        img.modal-logo(src="/img/logo.jpg" alt="CCD")
+        .modal-icon ✅
+        h3 Success!
+        p#successMessage
+        .modal-countdown
+          span#countdownText
+        button.btn.btn-primary(onclick="window.location='/businessmen'") Go to List Now
+
+  //- Error Modal
+  #errorModal.modal(style="display:none")
+    .modal-overlay
+      .modal-box.modal-error
+        img.modal-logo(src="/img/logo.jpg" alt="CCD")
+        .modal-icon ❌
+        h3 Submission Failed
+        ul#errorList
+        button.btn.btn-outline(onclick="closeModal('errorModal')") ✏️ Fix & Retry
+
+block scripts
+  - var bizId = businessman.id || ''
+  - var isEditMode = isEdit
+  script.
+    const IS_EDIT = !{JSON.stringify(isEdit)};
+    const RECORD_ID = !{JSON.stringify(businessman.id || '')};
+
+    // NIN → Age auto-calculate
+    document.getElementById('ninInput').addEventListener('input', function() {
+      const nin = this.value;
+      if (/^\d{8}/.test(nin)) {
+        const birthYear = parseInt(nin.substring(0, 4));
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - birthYear;
+        if (age > 0 && age < 130) {
+          document.getElementById('ageDisplay').value = age;
+          document.getElementById('ageHidden').value = age;
+        } else {
+          document.getElementById('ageDisplay').value = '';
+          document.getElementById('ageHidden').value = '';
+        }
+      } else {
+        document.getElementById('ageDisplay').value = '';
+        document.getElementById('ageHidden').value = '';
+      }
+    });
+
+    // AJAX Form Submit
+    document.getElementById('bizForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      const url = IS_EDIT ? '/businessmen/' + RECORD_ID : '/businessmen';
+      const method = IS_EDIT ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('successMessage').textContent = result.message;
+          document.getElementById('successModal').style.display = 'flex';
+
+          // Countdown timer (only relevant for data entry; admin also benefits)
+          let seconds = 10;
+          const countdownEl = document.getElementById('countdownText');
+          countdownEl.textContent = 'Redirecting in ' + seconds + ' seconds...';
+          const timer = setInterval(() => {
+            seconds--;
+            if (seconds <= 0) {
+              clearInterval(timer);
+              window.location.href = '/businessmen';
+            } else {
+              countdownEl.textContent = 'Redirecting in ' + seconds + ' seconds...';
+            }
+          }, 1000);
+        } else {
+          const ul = document.getElementById('errorList');
+          ul.innerHTML = '';
+          result.errors.forEach(err => {
+            const li = document.createElement('li');
+            li.textContent = err;
+            ul.appendChild(li);
+          });
+          document.getElementById('errorModal').style.display = 'flex';
+          btn.disabled = false;
+          btn.textContent = IS_EDIT ? '💾 Update Record' : '💾 Register Businessman';
+        }
+      } catch(err) {
+        document.getElementById('errorList').innerHTML = '<li>Network error. Please try again.</li>';
+        document.getElementById('errorModal').style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = IS_EDIT ? '💾 Update Record' : '💾 Register Businessman';
+      }
+    });
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }

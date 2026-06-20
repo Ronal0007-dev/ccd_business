@@ -1,0 +1,62 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 👥 User Management
+    a.btn.btn-primary(href="/users/add") ➕ Add New User
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+  if success && success.length
+    .alert.alert-success ✓ #{success[0]}
+
+  .table-wrapper
+    table.data-table
+      thead
+        tr
+          th #
+          th Full Name
+          th Username
+          th Email
+          th Phone
+          th Role
+          th Status
+          th Pwd Status
+          th Actions
+      tbody
+        if users.length === 0
+          tr
+            td(colspan="9").empty-cell No users found.
+        else
+          each u, i in users
+            tr
+              td= i + 1
+              td= u.fullName
+              td
+                code.username-code= u.username
+              td= u.email || '—'
+              td= u.phoneNumber
+              td
+                span.role-badge(class= u.role === 'admin' ? 'role-admin' : 'role-entry')
+                  = u.role === 'admin' ? '👑 Admin' : '✏️ Data Entry'
+              td
+                if u.isActive
+                  span.status-badge.status-active ● Active
+                else
+                  span.status-badge.status-inactive ● Inactive
+              td
+                if u.mustChangePassword
+                  span.status-badge.status-warn ⚠ Must Change
+                else
+                  span.status-badge.status-active ✓ Set
+              td
+                .action-buttons
+                  a.btn.btn-sm.btn-view(href="/users/" + u.id) 👁
+                  a.btn.btn-sm.btn-edit(href="/users/" + u.id + "/edit") ✏️
+                  form.inline-form-del(action="/users/" + u.id + "/reset-password" method="POST"
+                    onsubmit="return confirm('Reset password for ' + '#{u.fullName}' + ' to their phone number?')")
+                    button.btn.btn-sm.btn-warn(type="submit" title="Reset Password") 🔄
+                  form.inline-form-del(action="/users/" + u.id + "?_method=DELETE" method="POST"
+                    onsubmit="return confirm('Delete user #{u.fullName}? This cannot be undone.')")
+                    input(type="hidden" name="_method" value="DELETE")
+                    button.btn.btn-sm.btn-danger(type="submit" title="Delete") 🗑

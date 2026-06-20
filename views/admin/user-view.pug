@@ -1,0 +1,80 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 👤 User Profile
+    .page-actions
+      a.btn.btn-outline(href="/users") ← Back to Users
+      a.btn.btn-secondary(href="/users/" + userData.id + "/edit") ✏️ Edit
+      form(action="/users/" + userData.id + "/reset-password" method="POST" style="display:inline"
+        onsubmit="return confirm('Reset password for ' + '#{userData.fullName}' + ' to their phone number? They will need to change it on next login.')")
+        button.btn.btn-warn(type="submit") 🔄 Reset Password
+      if userData.id != user.id
+        form(action="/users/" + userData.id + "?_method=DELETE" method="POST" style="display:inline"
+          onsubmit="return confirm('Permanently delete this user account?')")
+          input(type="hidden" name="_method" value="DELETE")
+          button.btn.btn-danger(type="submit") 🗑 Delete
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+  if success && success.length
+    .alert.alert-success ✓ #{success[0]}
+
+  .detail-card
+    .detail-card-header.user-header
+      .user-avatar
+        = userData.role === 'admin' ? '👑' : '✏️'
+      .detail-heading
+        h2= userData.fullName
+        .detail-meta
+          span.role-badge(class= userData.role === 'admin' ? 'role-admin' : 'role-entry')
+            = userData.role === 'admin' ? 'Administrator' : 'Data Entry'
+          if userData.isActive
+            span.status-badge.status-active ● Active
+          else
+            span.status-badge.status-inactive ● Inactive
+
+    .detail-body
+      .detail-grid
+        .detail-item
+          .detail-label Username
+          .detail-value
+            code.username-code= userData.username
+        .detail-item
+          .detail-label Email
+          .detail-value= userData.email || '— Not provided —'
+        .detail-item
+          .detail-label Phone Number
+          .detail-value= userData.phoneNumber
+        .detail-item
+          .detail-label Role
+          .detail-value
+            span.role-badge(class= userData.role === 'admin' ? 'role-admin' : 'role-entry')
+              = userData.role === 'admin' ? '👑 Administrator' : '✏️ Data Entry'
+        .detail-item
+          .detail-label Account Status
+          .detail-value
+            if userData.isActive
+              span.status-badge.status-active ● Active
+            else
+              span.status-badge.status-inactive ● Inactive
+        .detail-item
+          .detail-label Password Status
+          .detail-value
+            if userData.mustChangePassword
+              span.status-badge.status-warn ⚠ Must change on next login
+            else
+              span.status-badge.status-active ✓ Password set by user
+        .detail-item
+          .detail-label Date Created
+          .detail-value= new Date(userData.createdAt).toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'})
+        .detail-item
+          .detail-label Last Updated
+          .detail-value= new Date(userData.updatedAt).toLocaleDateString('en-GB', {day:'2-digit', month:'long', year:'numeric'})
+
+  if userData.mustChangePassword
+    .alert.alert-warn.mt-16
+      span ⚠️
+      strong Password Reset Notice:&nbsp;
+      | This user has not yet changed their default password. Their default password is their registered phone number: 
+      strong= userData.phoneNumber
