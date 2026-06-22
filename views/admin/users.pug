@@ -3,6 +3,7 @@ extends ../layout
 block content
   .page-header
     h1.page-title 👥 User Management
+    a.btn.btn-outline(href="/dashboard") ← Back Home
     a.btn.btn-primary(href="/users/add") ➕ Add New User
 
   if error && error.length
@@ -38,7 +39,7 @@ block content
               td= u.phoneNumber
               td
                 span.role-badge(class= u.role === 'admin' ? 'role-admin' : 'role-entry')
-                  = u.role === 'admin' ? '👑 Admin' : '✏️ Data Entry'
+                  = u.role === 'admin' ? 'Admin' : 'Data Entry'
               td
                 if u.isActive
                   span.status-badge.status-active ● Active
@@ -51,8 +52,8 @@ block content
                   span.status-badge.status-active ✓ Set
               td
                 .action-buttons
-                  a.btn.btn-sm.btn-view(href="/users/" + u.id) 👁
-                  a.btn.btn-sm.btn-edit(href="/users/" + u.id + "/edit") ✏️
+                  a.btn.btn-sm.btn-view(href="/users/" + u.id title="View") 👁
+                  a.btn.btn-sm.btn-edit(href="/users/" + u.id + "/edit" title="Edit") ✏️
                   form.inline-form-del(action="/users/" + u.id + "/reset-password" method="POST"
                     onsubmit="return confirm('Reset password for ' + '#{u.fullName}' + ' to their phone number?')")
                     button.btn.btn-sm.btn-warn(type="submit" title="Reset Password") 🔄

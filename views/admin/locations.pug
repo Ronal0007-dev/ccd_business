@@ -39,7 +39,7 @@ block content
             .location-icon 📍
             .location-info
               h3.location-name= loc.locationName
-              .location-ward 🏘️ #{loc.ward}
+              .location-ward 🏘️ #{loc.id} #{loc.ward} 
           .location-card-body
             .location-stat
               span.stat-num= loc.businessmen ? loc.businessmen.length : 0

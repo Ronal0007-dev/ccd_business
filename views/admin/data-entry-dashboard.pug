@@ -32,19 +32,4 @@ block content
       a.action-card(href="/businessmen")
         .action-icon 📋
         .action-label View All Businessmen
-        .action-desc Browse and view all registered businessmen
-
-  .section-card
-    .section-card-header
-      h2 ➕ Add New Business Location
-    .section-card-body
-      form.inline-form(action="/locations" method="POST")
-        .form-row
-          .form-group
-            label Location Name *
-            input(type="text" name="locationName" placeholder="e.g. Kariakoo Market" required)
-          .form-group
-            label Ward *
-            input(type="text" name="ward" placeholder="e.g. Kariakoo Ward" required)
-          .form-group.form-action
-            button.btn.btn-primary(type="submit") ➕ Add Location
+        .action-desc Browse, search and view all registered businessmen

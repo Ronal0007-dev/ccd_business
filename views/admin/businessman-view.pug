@@ -6,7 +6,7 @@ block content
     .page-actions
       a.btn.btn-outline(href="/businessmen") ← Back to List
       if user.role === 'admin'
-        a.btn.btn-secondary(href="/businessmen/" + biz.id + "/edit") ✏️ Edit
+        a.btn.btn-primary(href="/businessmen/" + biz.id + "/edit") ✏️ Edit
         button.btn.btn-print(onclick="window.print()") 🖨 Print
         form(action="/businessmen/" + biz.id + "?_method=DELETE" method="POST" style="display:inline"
           onsubmit="return confirm('Delete this record permanently?')")

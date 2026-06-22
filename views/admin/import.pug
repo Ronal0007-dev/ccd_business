@@ -1,0 +1,160 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 📥 CSV Import — Businessmen
+    a.btn.btn-outline(href="/dashboard") ← Back Home
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+
+  //- Result panel shown after import
+  if result
+    .import-result(class= result.inserted > 0 ? 'result-success' : 'result-warn')
+      .result-header
+        .result-icon= result.inserted > 0 ? '✅' : '⚠️'
+        .result-title Import Complete
+      .result-stats
+        .result-stat
+          .rs-num= result.total
+          .rs-lbl Total Rows
+        .result-stat.rs-green
+          .rs-num= result.inserted
+          .rs-lbl Inserted
+        .result-stat.rs-red
+          .rs-num= result.skipped
+          .rs-lbl Skipped
+        .result-stat.rs-warn
+          .rs-num= result.warnings.length
+          .rs-lbl Warnings
+
+      if result.errors && result.errors.length
+        .result-section
+          h4.result-section-title ❌ Errors / Skipped Rows (#{result.errors.length})
+          .result-list
+            each e in result.errors
+              .result-list-item.item-error= e
+
+      if result.warnings && result.warnings.length
+        .result-section
+          h4.result-section-title ⚠️ Warnings (#{result.warnings.length})
+          .result-list
+            each w in result.warnings
+              .result-list-item.item-warn= w
+
+      if result.inserted > 0
+        .result-actions
+          a.btn.btn-primary(href="/businessmen") 📋 View All Businessmen
+
+  //- Upload form (always shown)
+  .section-card
+    .section-card-header
+      h2 Upload CSV File
+      p.card-subtitle Maximum 500 rows per file. Only .csv files accepted.
+    .section-card-body
+      form#importForm(action="/import" method="POST" enctype="multipart/form-data")
+        .upload-zone#dropZone
+          .upload-icon 📄
+          .upload-text
+            strong Click to select a CSV file
+            span  or drag and drop here
+          .upload-hint Accepted: .csv &nbsp;|&nbsp; Max: 5 MB &nbsp;|&nbsp; Up to 500 rows
+          input#csvFile(type="file" name="csvFile" accept=".csv" required)
+        #filePreview.file-preview(style="display:none")
+          .file-preview-icon 📄
+          .file-preview-info
+            .file-preview-name#fileName
+            .file-preview-size#fileSize
+          button.btn.btn-sm.btn-outline(type="button" onclick="clearFile()") ✕ Remove
+        .form-actions
+          button#importBtn.btn.btn-primary.btn-lg(type="submit" disabled)
+            span.btn-icon 📥
+            span Upload & Import
+
+  //- CSV format guide
+  .section-card
+    .section-card-header
+      h2 📋 CSV Format Guide
+    .section-card-body
+      p.mb-12 Your CSV must include the following column headers (order does not matter):
+      - const csvCols = [['location_id','Required. Numeric ID of the location.'],['full_name','Required. Full name of the businessman.'],['gender','Required. Male or Female.'],['nin','Required. Format: XXXXXXXX-XXXXX-XXXXX-XX'],['mobile_number','Required. At least 9 digits.'],['business_type','Required. Type of business.'],['tin','Optional. Tax Identification Number.']]
+      .csv-headers-grid
+        each col in csvCols
+          .csv-col
+            .csv-col-name= col[0]
+            .csv-col-desc= col[1]
+
+      .csv-example
+        p.csv-example-title Example CSV:
+        pre.csv-code.
+          location_id,full_name,gender,nin,tin,mobile_number,business_type
+          1,John Mwangi,Male,19850312-12345-67890-01,,0712345678,Retail Shop
+          2,Amina Hassan,Female,19920605-98765-43210-02,123456789,0756789012,Food Vendor
+
+      .form-actions
+        a.btn.btn-outline#downloadTemplate(href="#" onclick="downloadTemplate(); return false;")
+          span 📥 Download Sample Template
+
+block scripts
+  script.
+    // Drag-and-drop + file input handler
+    const dropZone   = document.getElementById('dropZone');
+    const fileInput  = document.getElementById('csvFile');
+    const filePreview= document.getElementById('filePreview');
+    const importBtn  = document.getElementById('importBtn');
+
+    function showFile(file) {
+      if (!file) return;
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+      filePreview.style.display = 'flex';
+      dropZone.style.display    = 'none';
+      importBtn.disabled        = false;
+    }
+
+    function clearFile() {
+      fileInput.value           = '';
+      filePreview.style.display = 'none';
+      dropZone.style.display    = 'flex';
+      importBtn.disabled        = true;
+    }
+
+    fileInput.addEventListener('change', () => showFile(fileInput.files[0]));
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', ()  => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.csv')) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        showFile(file);
+      } else {
+        alert('Please drop a .csv file.');
+      }
+    });
+
+    // Show spinner on submit
+    document.getElementById('importForm').addEventListener('submit', function() {
+      importBtn.disabled = true;
+      importBtn.innerHTML = '<span class="spinner"></span> Importing...';
+    });
+
+    // Download sample CSV template
+    function downloadTemplate() {
+      const csv = [
+        'location_id,full_name,gender,nin,tin,mobile_number,business_type',
+        '1,John Mwangi,Male,19850312-12345-67890-01,,0712345678,Retail Shop',
+        '1,Amina Hassan,Female,19920605-98765-43210-02,123456789,0756789012,Food Vendor',
+        '2,Peter Kimani,Male,19781120-11111-22222-03,,0745678901,Hardware Store'
+      ].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = 'businessmen-import-template.csv';
+      a.click();
+    }

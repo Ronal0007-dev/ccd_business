@@ -1,13 +1,14 @@
 require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const flash = require('connect-flash');
-const methodOverride = require('method-override');
-const path = require('path');
+const express       = require('express');
+const session       = require('express-session');
+const flash         = require('connect-flash');
+const methodOverride= require('method-override');
+const path          = require('path');
 
-const { sequelize } = require('./models');
+const { sequelize }  = require('./models');
+const { startScheduler } = require('./services/backup');
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'pug');
@@ -30,11 +31,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/auth', require('./routes/auth'));
-app.use('/dashboard', require('./routes/dashboard'));
-app.use('/locations', require('./routes/locations'));
-app.use('/businessmen', require('./routes/businessmen'));
-app.use('/users', require('./routes/users'));
+// Routes
+app.use('/auth',       require('./routes/auth'));
+app.use('/dashboard',  require('./routes/dashboard'));
+app.use('/locations',  require('./routes/locations'));
+app.use('/businessmen',require('./routes/businessmen'));
+app.use('/users',      require('./routes/users'));
+app.use('/import',     require('./routes/import'));
+app.use('/backups',    require('./routes/backups'));
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');
@@ -50,6 +54,7 @@ app.use((req, res) => {
 sequelize.sync({ alter: true })
   .then(() => {
     console.log('✅ Database synced.');
+    startScheduler();    // start the 3-day backup cron
     app.listen(PORT, () => console.log(`🚀 BizRegistry running at http://localhost:${PORT}`));
   })
   .catch(err => { console.error('❌ DB sync failed:', err); process.exit(1); });

@@ -3,7 +3,7 @@ extends ../layout
 block content
   .page-header
     h1.page-title= isEdit ? '✏️ Edit Businessman' : '➕ Register Businessman'
-    a.btn.btn-outline(href="/businessmen") ← Back to List
+    a.btn.btn-outline(href="/dashboard") ← Back to Home
 
   if error && error.length
     .alert.alert-error= error[0]
@@ -62,7 +62,7 @@ block content
         .form-actions
           button#submitBtn.btn.btn-primary.btn-lg(type="submit")
             = isEdit ? '💾 Update Record' : '💾 Register Businessman'
-          a.btn.btn-outline(href="/businessmen") Cancel
+          a.btn.btn-outline(href="/dashboard") Cancel
 
   //- Success Modal
   #successModal.modal(style="display:none")

@@ -1,37 +1,92 @@
 extends ../layout
 
 block content
+  - const f = filters || {}
+  - const biz_list = businessmen || []
+  - const loc_list = locations || []
   .page-header
     h1.page-title 📋 Businessman Registry
     .page-actions
+      a.btn.btn-outline(href="/dashboard") ← Back to Home
       if user.role === 'admin'
         button.btn.btn-print(onclick="window.print()") 🖨 Print List
       a.btn.btn-secondary(href="/businessmen/add") ➕ Add New
+
 
   if error && error.length
     .alert.alert-error ⚠️ #{error[0]}
   if success && success.length
     .alert.alert-success ✓ #{success[0]}
 
+  //- Search & Filter Bar
+  .filter-bar.no-print
+    form#filterForm(action="/businessmen" method="GET")
+      .filter-grid
+        .filter-group
+          label.filter-label 🔍 Search
+          input.filter-input(
+            type="text"
+            name="search"
+            value=f.search
+            placeholder="Name, NIN, mobile, business type... (press Enter to search)"
+            autocomplete="off"
+          )
+        .filter-group
+          label.filter-label 👤 Gender
+          select.filter-input(name="gender")
+            option(value="" selected=!f.gender) All Genders
+            option(value="Male" selected=(f.gender === 'Male')) Male
+            option(value="Female" selected=(f.gender === 'Female')) Female
+        .filter-group
+          label.filter-label 📍 Location
+          select.filter-input(name="locationId")
+            option(value="" selected=!f.locationId) All Locations
+            each loc in loc_list
+              option(value=loc.id selected=(f.locationId == loc.id)) #{loc.locationName}
+        .filter-group.filter-actions
+          button.btn.btn-primary(type="submit") Apply Filters
+          if f.search || f.gender || f.locationId
+            a.btn.btn-outline(href="/businessmen") ✕ Clear
+
+  //- Results summary
+  .results-summary.no-print
+    span
+      if f.search || f.gender || f.locationId
+        strong #{biz_list.length}
+        |  result(s) found
+        if f.search
+          |  for "#{f.search}"
+      else
+        strong #{biz_list.length}
+        |  total records
+
   .table-wrapper
-    table.data-table
+    table.data-table#bizTable
       thead
         tr
           th #
           th Full Name
           th Gender
           th NIN
+          th Age
           th Mobile
           th Business Type
           th Location
           th Registered By
-          th Actions
+          th.no-print Actions
       tbody
-        if businessmen.length === 0
+        if biz_list.length === 0
           tr
-            td(colspan="10").empty-cell No records found.
+            td(colspan="10").empty-cell
+              .empty-state-inline
+                span.empty-icon-sm 🔍
+                if f.search || f.gender || f.locationId
+                  p No records match your search.
+                  a.btn.btn-outline.btn-sm(href="/businessmen") Clear filters
+                else
+                  p No businessmen registered yet.
         else
-          each biz, i in businessmen
+          each biz, i in biz_list
             tr
               td= i + 1
               td= biz.fullName
@@ -39,18 +94,21 @@ block content
                 span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')
                   = biz.gender
               td.nin-cell= biz.nin
+              td= biz.age
               td= biz.mobileNumber
               td= biz.businessType
               td
                 if biz.location
                   div= biz.location.locationName
                   small.text-muted= biz.location.ward
+                else
+                  span.text-muted —
               td
                 if biz.registrar
                   = biz.registrar.fullName
                 else
                   span.text-muted N/A
-              td
+              td.no-print
                 .action-buttons
                   a.btn.btn-sm.btn-view(href="/businessmen/" + biz.id) 👁 View
                   if user.role === 'admin'
@@ -63,8 +121,26 @@ block content
 block head
   style.
     @media print {
-      .navbar, .page-actions, .no-print, .alert { display: none !important; }
+      .navbar, .page-actions, .no-print, .alert, .filter-bar, .results-summary { display: none !important; }
       .page-title { margin-bottom: 10px; }
-      .table-wrapper { overflow: visible; }
+      .table-wrapper { overflow: visible; box-shadow: none; border: none; }
       table { font-size: 11px; }
+      th, td { padding: 6px 8px !important; }
     }
+
+block scripts
+  script.
+    // Search box: only submit on Enter key — never auto-submit while typing
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          document.getElementById('filterForm').submit();
+        }
+      });
+    }
+    // Dropdowns: submit on change (single deliberate action, not typing)
+    document.querySelectorAll('.filter-input[name="gender"], .filter-input[name="locationId"]').forEach(el => {
+      el.addEventListener('change', () => document.getElementById('filterForm').submit());
+    });

@@ -424,3 +424,346 @@ body {
 .alert-warn { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 EOF
 echo "done"
+/* ── Search / Filter Bar ── */
+.filter-bar {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+.filter-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 160px;
+}
+.filter-group.filter-actions {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: auto;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--gray-50);
+  color: var(--gray-900);
+  transition: border .15s, background .15s;
+  width: 100%;
+}
+.filter-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Results summary */
+.results-summary {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+.results-summary strong { color: var(--gray-900); }
+
+/* Empty inline state */
+.empty-state-inline { text-align: center; padding: 30px 0; }
+.empty-icon-sm { font-size: 32px; display: block; margin-bottom: 8px; }
+.empty-state-inline p { color: var(--gray-500); margin-bottom: 12px; }
+
+@media (max-width: 768px) {
+  .filter-grid { flex-direction: column; }
+  .filter-group { min-width: 100%; }
+  .filter-group.filter-actions { flex-direction: row; }
+}
+
+/* ── CSV Import Page ── */
+.upload-zone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--gray-50);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-zone input[type="file"] { display: none; }
+.upload-icon { font-size: 48px; line-height: 1; }
+.upload-text strong { font-size: 15px; color: var(--gray-900); }
+.upload-text span { color: var(--gray-500); font-size: 14px; }
+.upload-hint { font-size: 12px; color: var(--gray-400); }
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--primary-light);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  margin-top: 0;
+}
+.file-preview-icon { font-size: 32px; }
+.file-preview-name { font-weight: 600; font-size: 14px; }
+.file-preview-size { font-size: 12px; color: var(--gray-500); }
+.file-preview-info { flex: 1; }
+
+/* Import result panel */
+.import-result {
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow);
+}
+.result-success { border-color: var(--success); }
+.result-warn    { border-color: var(--warning); }
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+}
+.result-icon  { font-size: 28px; }
+.result-title { font-size: 18px; font-weight: 700; }
+.result-stats {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+.result-stat {
+  flex: 1;
+  padding: 16px;
+  text-align: center;
+  border-right: 1px solid var(--gray-200);
+}
+.result-stat:last-child { border-right: none; }
+.rs-num  { font-size: 28px; font-weight: 700; color: var(--gray-900); }
+.rs-lbl  { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: .4px; }
+.rs-green .rs-num { color: var(--success); }
+.rs-red   .rs-num { color: var(--danger); }
+.rs-warn  .rs-num { color: var(--warning); }
+.result-section { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); }
+.result-section-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.result-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.result-list-item {
+  font-size: 12px; padding: 6px 10px; border-radius: 4px; font-family: monospace;
+}
+.item-error { background: var(--danger-light);  color: var(--danger); }
+.item-warn  { background: var(--warning-light); color: var(--warning); }
+.result-actions { padding: 16px 20px; }
+
+/* CSV guide */
+.csv-headers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.csv-col {
+  padding: 12px 14px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: var(--gray-50);
+}
+.csv-col-name { font-family: monospace; font-weight: 700; font-size: 13px; color: var(--primary-dark); margin-bottom: 4px; }
+.csv-col-desc { font-size: 12px; color: var(--gray-500); }
+.csv-example  { margin-bottom: 16px; }
+.csv-example-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--gray-700); }
+.csv-code {
+  background: var(--gray-900); color: #a5f3fc;
+  padding: 14px 16px; border-radius: var(--radius-sm);
+  font-size: 12px; overflow-x: auto; white-space: pre;
+  font-family: monospace; line-height: 1.6;
+}
+.mb-12 { margin-bottom: 12px; }
+.mb-20 { margin-bottom: 20px; }
+.text-center { text-align: center; }
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Backups page ── */
+.backup-schedule-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.bsi-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+}
+.bsi-icon { font-size: 28px; line-height: 1; }
+.bsi-text strong { display: block; font-size: 13px; margin-bottom: 4px; }
+.bsi-text p { font-size: 12px; color: var(--gray-500); margin: 0; }
+
+/* ══════════════════════════════════════════
+   CSV IMPORT PAGE
+══════════════════════════════════════════ */
+.upload-zone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: var(--gray-50);
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+.upload-zone input[type="file"] { display: none; }
+.upload-icon { font-size: 48px; line-height: 1; }
+.upload-text { font-size: 15px; color: var(--gray-700); }
+.upload-text strong { color: var(--primary); }
+.upload-hint { font-size: 12px; color: var(--gray-500); }
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--success-light);
+  border: 1px solid #86efac;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+.file-preview-icon { font-size: 28px; }
+.file-preview-info { flex: 1; }
+.file-preview-name { font-weight: 600; font-size: 14px; color: var(--gray-900); }
+.file-preview-size { font-size: 12px; color: var(--gray-500); }
+
+/* Import result panel */
+.import-result {
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--gray-200);
+}
+.result-success { background: #f0fdf4; border-color: #86efac; }
+.result-warn    { background: #fffbeb; border-color: #fde68a; }
+.result-header  { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.result-icon    { font-size: 32px; }
+.result-title   { font-size: 20px; font-weight: 700; }
+.result-stats   { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.result-stat    {
+  flex: 1; min-width: 100px;
+  background: white; border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm); padding: 14px;
+  text-align: center;
+}
+.rs-num  { font-size: 28px; font-weight: 700; color: var(--gray-900); }
+.rs-lbl  { font-size: 11px; color: var(--gray-500); font-weight: 600; text-transform: uppercase; }
+.rs-green .rs-num { color: var(--success); }
+.rs-red   .rs-num { color: var(--danger); }
+.rs-warn  .rs-num { color: var(--warning); }
+
+.result-section       { margin-top: 16px; }
+.result-section-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.result-list          { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.result-list-item     { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-family: monospace; }
+.item-error           { background: var(--danger-light); color: var(--danger); }
+.item-warn            { background: var(--warning-light); color: var(--warning); }
+.result-actions       { margin-top: 20px; }
+
+/* CSV guide */
+.mb-12 { margin-bottom: 12px; }
+.mb-20 { margin-bottom: 20px; }
+.csv-headers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.csv-col {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+.csv-col-name { font-family: monospace; font-weight: 700; color: var(--primary-dark); font-size: 13px; }
+.csv-col-desc { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+.csv-example  { margin-top: 8px; }
+.csv-example-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.csv-code {
+  background: #1e293b; color: #e2e8f0;
+  padding: 14px 16px; border-radius: var(--radius-sm);
+  font-size: 12px; overflow-x: auto;
+  white-space: pre; line-height: 1.7;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  vertical-align: middle; margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
+   BACKUPS PAGE
+══════════════════════════════════════════ */
+.backup-schedule-info {
+  display: flex; gap: 24px; flex-wrap: wrap;
+}
+.bsi-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  flex: 1; min-width: 200px;
+}
+.bsi-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.bsi-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.bsi-text p { font-size: 13px; color: var(--gray-500); margin: 0; }
+.text-center { text-align: center; }
