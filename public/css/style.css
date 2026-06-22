@@ -118,9 +118,9 @@ body {
 }
 .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
 .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
-.btn-outline { background: white; color: var(--gray-700); border-color: var(--gray-300); }
+.btn-outline { background: var(--danger); color: white; border-color: var(--gray-300); }
 .btn-outline:hover { background: var(--gray-100); }
-.btn-secondary { background: var(--purple); color: white; }
+.btn-secondary { background: var(--success); color: white; }
 .btn-secondary:hover { background: #6d28d9; }
 .btn-danger { background: var(--danger); color: white; border-color: var(--danger); }
 .btn-danger:hover { background: #b91c1c; }
@@ -206,7 +206,7 @@ body {
 .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--gray-700); }
 
 /* ── Inline Form ── */
-.inline-form .form-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; }
+.inline-form .form-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .inline-form .form-group { flex: 1; min-width: 180px; }
 .inline-form .form-action { flex: 0 0 auto; }
 
