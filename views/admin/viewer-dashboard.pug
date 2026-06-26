@@ -1,0 +1,35 @@
+extends ../layout
+
+block content
+  .page-header
+    h1.page-title 👁 Viewer Dashboard
+    p.page-subtitle Welcome, #{user.fullName}
+
+  if error && error.length
+    .alert.alert-error ⚠️ #{error[0]}
+
+  .stats-grid
+    .stat-card.stat-blue
+      .stat-icon 📍
+      .stat-info
+        .stat-number= stats.totalLocations
+        .stat-label Business Locations
+    .stat-card.stat-green
+      .stat-icon 👔
+      .stat-info
+        .stat-number= stats.totalBusinessmen
+        .stat-label Registered Businessmen
+
+  .viewer-notice
+    .viewer-notice-icon 👁
+    .viewer-notice-text
+      strong View-Only Access
+      p You have read-only access. You can browse and print businessmen information but cannot add or modify any data.
+
+  .quick-actions
+    h2.section-title Quick Actions
+    .action-grid
+      a.action-card(href="/businessmen")
+        .action-icon 📋
+        .action-label Browse Businessmen
+        .action-desc Search, view and print businessman records

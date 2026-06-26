@@ -3,8 +3,6 @@ const requireAuth = (req, res, next) => {
     req.flash('error', 'Please login to continue.');
     return res.redirect('/auth/login');
   }
-  // Use req.originalUrl so the full path is available regardless of which router calls this.
-  // req.path strips the mount prefix (/auth), so /auth/change-password becomes /change-password.
   if (req.session.user.mustChangePassword) {
     const url = req.originalUrl.split('?')[0];
     if (!url.startsWith('/auth/change-password') && !url.startsWith('/auth/logout')) {
@@ -22,4 +20,13 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAdmin };
+// Admin or Data Entry (not viewer)
+const requireEditor = (req, res, next) => {
+  if (!req.session.user || !['admin', 'data_entry'].includes(req.session.user.role)) {
+    req.flash('error', 'Access denied. You have view-only access.');
+    return res.redirect('/businessmen');
+  }
+  next();
+};
+
+module.exports = { requireAuth, requireAdmin, requireEditor };

@@ -1,67 +1,69 @@
 extends ../layout
 
 block content
-  - const f = filters || {}
-  - const biz_list = businessmen || []
-  - const loc_list = locations || []
+  - const f         = filters     || {}
+  - const biz_list  = businessmen || []
+  - const loc_list  = locations   || []
+  - const blk_list  = filterBlocks || []
+
   .page-header
     h1.page-title 📋 Businessman Registry
     .page-actions
-      a.btn.btn-outline(href="/dashboard") ← Back to Home
-      if user.role === 'admin'
+      if user.role !== 'viewer'
+        a.btn.btn-secondary(href="/businessmen/add") ➕ Add New
+        a.btn.btn-primary(href="/dashboard") 🏠 Back Home
+      if user.role === 'admin' || user.role === 'viewer'
         button.btn.btn-print(onclick="window.print()") 🖨 Print List
-      a.btn.btn-secondary(href="/businessmen/add") ➕ Add New
-
 
   if error && error.length
     .alert.alert-error ⚠️ #{error[0]}
   if success && success.length
     .alert.alert-success ✓ #{success[0]}
 
-  //- Search & Filter Bar
+  //- Filter Bar
   .filter-bar.no-print
     form#filterForm(action="/businessmen" method="GET")
       .filter-grid
         .filter-group
           label.filter-label 🔍 Search
-          input.filter-input(
-            type="text"
-            name="search"
-            value=f.search
-            placeholder="Name, NIN, mobile, business type... (press Enter to search)"
-            autocomplete="off"
-          )
+          input#searchInput.filter-input(
+            type="text" name="search" value=f.search
+            placeholder="Name, NIN, mobile, cabin... (Enter to search)"
+            autocomplete="off")
         .filter-group
           label.filter-label 👤 Gender
-          select.filter-input(name="gender")
+          select#genderFilter.filter-input(name="gender")
             option(value="" selected=!f.gender) All Genders
-            option(value="Male" selected=(f.gender === 'Male')) Male
-            option(value="Female" selected=(f.gender === 'Female')) Female
+            option(value="Male"   selected=(f.gender==='Male'))   Male
+            option(value="Female" selected=(f.gender==='Female')) Female
         .filter-group
           label.filter-label 📍 Location
-          select.filter-input(name="locationId")
+          select#locationFilter.filter-input(name="locationId")
             option(value="" selected=!f.locationId) All Locations
             each loc in loc_list
-              option(value=loc.id selected=(f.locationId == loc.id)) #{loc.locationName}
+              option(value=loc.id selected=(f.locationId==loc.id)) #{loc.locationName}
+        .filter-group
+          label.filter-label 🔲 Block/Zone
+          select#blockFilter.filter-input(name="blockId" disabled=(!f.locationId))
+            option(value="" selected=!f.blockId) All Blocks
+            each blk in blk_list
+              option(value=blk.id selected=(f.blockId==blk.id)) #{blk.blockName}
         .filter-group.filter-actions
-          button.btn.btn-primary(type="submit") Apply Filters
-          if f.search || f.gender || f.locationId
+          button.btn.btn-primary(type="submit") Apply
+          if f.search || f.gender || f.locationId || f.blockId
             a.btn.btn-outline(href="/businessmen") ✕ Clear
 
-  //- Results summary
   .results-summary.no-print
-    span
-      if f.search || f.gender || f.locationId
-        strong #{biz_list.length}
-        |  result(s) found
-        if f.search
-          |  for "#{f.search}"
-      else
-        strong #{biz_list.length}
-        |  total records
+    strong #{biz_list.length}
+    if f.search || f.gender || f.locationId || f.blockId
+      |  result(s) found
+      if f.search
+        |  for "#{f.search}"
+    else
+      |  total records
 
   .table-wrapper
-    table.data-table#bizTable
+    table.data-table
       thead
         tr
           th #
@@ -72,15 +74,17 @@ block content
           th Mobile
           th Business Type
           th Location
+          th Block/Zone
+          th Cabin
           th Registered By
           th.no-print Actions
       tbody
         if biz_list.length === 0
           tr
-            td(colspan="10").empty-cell
+            td(colspan="12").empty-cell
               .empty-state-inline
                 span.empty-icon-sm 🔍
-                if f.search || f.gender || f.locationId
+                if f.search || f.gender || f.locationId || f.blockId
                   p No records match your search.
                   a.btn.btn-outline.btn-sm(href="/businessmen") Clear filters
                 else
@@ -91,8 +95,7 @@ block content
               td= i + 1
               td= biz.fullName
               td
-                span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')
-                  = biz.gender
+                span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')= biz.gender
               td.nin-cell= biz.nin
               td= biz.age
               td= biz.mobileNumber
@@ -103,14 +106,12 @@ block content
                   small.text-muted= biz.location.ward
                 else
                   span.text-muted —
-              td
-                if biz.registrar
-                  = biz.registrar.fullName
-                else
-                  span.text-muted N/A
+              td= biz.block ? biz.block.blockName : '—'
+              td= biz.cabinNumber || '—'
+              td= biz.registrar ? biz.registrar.fullName : '—'
               td.no-print
                 .action-buttons
-                  a.btn.btn-sm.btn-view(href="/businessmen/" + biz.id) 👁 View
+                  a.btn.btn-sm.btn-view(href="/businessmen/" + biz.id) 👁
                   if user.role === 'admin'
                     a.btn.btn-sm.btn-edit(href="/businessmen/" + biz.id + "/edit") ✏️
                     form(action="/businessmen/" + biz.id + "?_method=DELETE" method="POST" style="display:inline"
@@ -122,25 +123,45 @@ block head
   style.
     @media print {
       .navbar, .page-actions, .no-print, .alert, .filter-bar, .results-summary { display: none !important; }
-      .page-title { margin-bottom: 10px; }
       .table-wrapper { overflow: visible; box-shadow: none; border: none; }
-      table { font-size: 11px; }
-      th, td { padding: 6px 8px !important; }
+      table { font-size: 10px; }
+      th, td { padding: 4px 6px !important; }
     }
 
 block scripts
   script.
-    // Search box: only submit on Enter key — never auto-submit while typing
-    const searchInput = document.querySelector('input[name="search"]');
+    // Search: submit only on Enter
+    const searchInput = document.getElementById('searchInput');
     if (searchInput) {
       searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          document.getElementById('filterForm').submit();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('filterForm').submit(); }
       });
     }
-    // Dropdowns: submit on change (single deliberate action, not typing)
-    document.querySelectorAll('.filter-input[name="gender"], .filter-input[name="locationId"]').forEach(el => {
-      el.addEventListener('change', () => document.getElementById('filterForm').submit());
-    });
+
+    // Gender: submit on change
+    const genderFilter = document.getElementById('genderFilter');
+    if (genderFilter) genderFilter.addEventListener('change', () => document.getElementById('filterForm').submit());
+
+    // Location cascade → fetch blocks then submit
+    const locationFilter = document.getElementById('locationFilter');
+    const blockFilter    = document.getElementById('blockFilter');
+    if (locationFilter) {
+      locationFilter.addEventListener('change', async function() {
+        const locId = this.value;
+        blockFilter.innerHTML = '<option value="">All Blocks</option>';
+        blockFilter.disabled = true;
+        if (locId) {
+          try {
+            const res = await fetch('/locations/' + locId + '/blocks');
+            const blocks = await res.json();
+            blocks.forEach(b => {
+              const opt = document.createElement('option');
+              opt.value = b.id; opt.textContent = b.blockName;
+              blockFilter.appendChild(opt);
+            });
+            blockFilter.disabled = blocks.length === 0;
+          } catch(e) {}
+        }
+        document.getElementById('filterForm').submit();
+      });
+    }

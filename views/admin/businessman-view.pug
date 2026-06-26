@@ -6,8 +6,9 @@ block content
     .page-actions
       a.btn.btn-outline(href="/businessmen") ← Back to List
       if user.role === 'admin'
-        a.btn.btn-primary(href="/businessmen/" + biz.id + "/edit") ✏️ Edit
-        button.btn.btn-print(onclick="window.print()") 🖨 Print
+        a.btn.btn-secondary(href="/businessmen/" + biz.id + "/edit") ✏️ Edit
+      button.btn.btn-print(onclick="window.print()") 🖨 Print
+      if user.role === 'admin'
         form(action="/businessmen/" + biz.id + "?_method=DELETE" method="POST" style="display:inline"
           onsubmit="return confirm('Delete this record permanently?')")
           input(type="hidden" name="_method" value="DELETE")
@@ -20,18 +21,32 @@ block content
 
   .detail-card
     .detail-card-header
-      .detail-avatar
-        = biz.gender === 'Male' ? '👨' : '👩'
+      .detail-avatar= biz.gender === 'Male' ? '👨' : '👩'
       .detail-heading
         h2= biz.fullName
         .detail-meta
-          span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')
-            = biz.gender
+          span.gender-badge(class= biz.gender === 'Male' ? 'badge-male' : 'badge-female')= biz.gender
           if biz.location
             span.location-tag 📍 #{biz.location.locationName}
+          if biz.block
+            span.location-tag 🔲 #{biz.block.blockName}
+          if biz.cabinNumber
+            span.location-tag 🚪 Cabin #{biz.cabinNumber}
 
     .detail-body
       .detail-grid
+        .detail-item
+          .detail-label Location
+          .detail-value= biz.location ? biz.location.locationName : '—'
+        .detail-item
+          .detail-label Ward
+          .detail-value= biz.location ? biz.location.ward : '—'
+        .detail-item
+          .detail-label Block / Zone
+          .detail-value= biz.block ? biz.block.blockName : '— Not assigned —'
+        .detail-item
+          .detail-label Cabin Number
+          .detail-value= biz.cabinNumber || '— Not provided —'
         .detail-item
           .detail-label NIN
           .detail-value.mono= biz.nin
@@ -47,13 +62,6 @@ block content
         .detail-item
           .detail-label Type of Business
           .detail-value= biz.businessType
-        if biz.location
-          .detail-item
-            .detail-label Location
-            .detail-value= biz.location.locationName
-          .detail-item
-            .detail-label Ward
-            .detail-value= biz.location.ward
         .detail-item.highlight-item
           .detail-label Registered By
           .detail-value
@@ -69,5 +77,5 @@ block content
 block head
   style.
     @media print {
-      .navbar, .page-actions, .no-print { display: none !important; }
+      .navbar, .page-actions { display: none !important; }
     }

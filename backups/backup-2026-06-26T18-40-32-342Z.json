@@ -1,0 +1,116 @@
+{
+  "exportedAt": "2026-06-26T18:40:32.342Z",
+  "counts": {
+    "businessmen": 3,
+    "locations": 3,
+    "users": 3
+  },
+  "businessmen": [
+    {
+      "id": 1,
+      "locationId": 1,
+      "blockId": null,
+      "cabinNumber": null,
+      "fullName": "Kalla Ibrahim",
+      "gender": "Male",
+      "nin": "19941024-41213-00002-25",
+      "age": 32,
+      "tin": "142342",
+      "mobileNumber": "0679929271",
+      "businessType": "Mitumba",
+      "registeredBy": 1,
+      "createdAt": "2026-06-22T05:28:28.000Z",
+      "updatedAt": "2026-06-22T05:28:28.000Z"
+    },
+    {
+      "id": 2,
+      "locationId": 1,
+      "blockId": null,
+      "cabinNumber": null,
+      "fullName": "Joseph Fungo",
+      "gender": "Male",
+      "nin": "19951224-22222-00002-33",
+      "age": 31,
+      "tin": null,
+      "mobileNumber": "0792851497",
+      "businessType": "Nafaka",
+      "registeredBy": 1,
+      "createdAt": "2026-06-22T05:38:20.000Z",
+      "updatedAt": "2026-06-22T05:38:20.000Z"
+    },
+    {
+      "id": 3,
+      "locationId": 3,
+      "blockId": 1,
+      "cabinNumber": "1",
+      "fullName": "Peter Kimani",
+      "gender": "Male",
+      "nin": "19781120-11111-22222-03",
+      "age": 48,
+      "tin": null,
+      "mobileNumber": "745678901",
+      "businessType": "Hardware Store",
+      "registeredBy": 1,
+      "createdAt": "2026-06-22T08:47:26.000Z",
+      "updatedAt": "2026-06-26T18:16:55.000Z"
+    }
+  ],
+  "locations": [
+    {
+      "id": 1,
+      "locationName": "Kariakoo Market",
+      "ward": "Kariakoo Ward",
+      "createdBy": 1,
+      "createdAt": "2026-06-22T05:27:09.000Z",
+      "updatedAt": "2026-06-22T05:27:09.000Z"
+    },
+    {
+      "id": 2,
+      "locationName": "Sabasaba market",
+      "ward": "Makole Ward",
+      "createdBy": 1,
+      "createdAt": "2026-06-22T05:37:12.000Z",
+      "updatedAt": "2026-06-22T05:37:12.000Z"
+    },
+    {
+      "id": 3,
+      "locationName": "Machinga Market",
+      "ward": "Chamwino Ward",
+      "createdBy": 1,
+      "createdAt": "2026-06-24T06:03:31.000Z",
+      "updatedAt": "2026-06-24T06:03:31.000Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "fullName": "System Administrator",
+      "username": "admin",
+      "email": "admin@ccd.go.tz",
+      "phoneNumber": "0700000000",
+      "role": "admin",
+      "isActive": 1,
+      "createdAt": "2026-06-22T05:27:09.000Z"
+    },
+    {
+      "id": 2,
+      "fullName": "Data Entry Clerk",
+      "username": "dataentry0001",
+      "email": "dataentry@ccd.go.tz",
+      "phoneNumber": "0711000001",
+      "role": "data_entry",
+      "isActive": 1,
+      "createdAt": "2026-06-22T05:27:09.000Z"
+    },
+    {
+      "id": 3,
+      "fullName": "David Lubago",
+      "username": "david6878",
+      "email": "davis.lubago@gmail.com",
+      "phoneNumber": "0772106878",
+      "role": "viewer",
+      "isActive": 1,
+      "createdAt": "2026-06-26T18:36:24.000Z"
+    }
+  ]
+}

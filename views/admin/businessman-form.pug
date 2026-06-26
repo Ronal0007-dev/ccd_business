@@ -3,10 +3,12 @@ extends ../layout
 block content
   .page-header
     h1.page-title= isEdit ? '✏️ Edit Businessman' : '➕ Register Businessman'
-    a.btn.btn-outline(href="/dashboard") ← Back to Home
+    a.btn.btn-outline(href="/businessmen") ← Back to List
 
   if error && error.length
-    .alert.alert-error= error[0]
+    .alert.alert-error ⚠️ #{error[0]}
+
+  - const preselectedBlocks = businessman.locationId ? (locations.find(l => l.id == businessman.locationId) || {blocks:[]}).blocks || [] : []
 
   .section-card
     .section-card-body
@@ -14,24 +16,38 @@ block content
         input(type="hidden" name="_method" value=isEdit ? 'PUT' : 'POST')
         input(type="hidden" name="recordId" value=businessman.id || '')
 
+        .form-section-title 📍 Location Details
         .form-grid
           .form-group
             label Location *
-            select(name="locationId" required)
+            select#locationSelect(name="locationId" required)
               option(value="") — Select Location —
               each loc in locations
-                option(value=loc.id selected=(businessman.locationId == loc.id))
-                  = loc.locationName + ' (' + loc.ward + ')'
+                option(value=loc.id selected=(businessman.locationId == loc.id))= loc.locationName + ' (' + loc.ward + ')'
 
           .form-group
+            label Block / Zone
+            select#blockSelect(name="blockId")
+              option(value="") — Select Block/Zone (optional) —
+              each blk in preselectedBlocks
+                option(value=blk.id selected=(businessman.blockId == blk.id))= blk.blockName
+
+          .form-group
+            label Cabin Number
+            input(type="text" name="cabinNumber" value=businessman.cabinNumber || '' placeholder="e.g. C-101, A-22")
+            small.field-hint Optional — physical cabin or stall number
+
+        .form-section-title.mt-20 👔 Personal Information
+        .form-grid
+          .form-group
             label Full Name *
-            input(type="text" name="fullName" value=businessman.fullName || '' required)
+            input(type="text" name="fullName" value=businessman.fullName || '' placeholder="Full name" required)
 
           .form-group
             label Gender *
             select(name="gender" required)
               option(value="") — Select —
-              option(value="Male" selected=(businessman.gender === 'Male')) Male
+              option(value="Male"   selected=(businessman.gender === 'Male'))   Male
               option(value="Female" selected=(businessman.gender === 'Female')) Female
 
           .form-group
@@ -39,20 +55,20 @@ block content
             input#ninInput(type="text" name="nin" value=businessman.nin || ''
               placeholder="12345678-12345-12345-12"
               pattern="\\d{8}-\\d{5}-\\d{5}-\\d{2}" maxlength="25" required)
-            small.field-hint First 4 digits = birth year, used to auto-calculate age
+            small.field-hint First 4 digits = birth year — age is auto-calculated
 
           .form-group
-            label Age (Auto-calculated from NIN)
+            label Age (Auto-calculated)
             input#ageDisplay(type="number" value=businessman.age || '' readonly disabled)
             input#ageHidden(type="hidden" name="age" value=businessman.age || '')
 
           .form-group
-            label TIN # (Optional)
-            input(type="text" name="tin" value=businessman.tin || '' placeholder="Tax Identification Number")
-
-          .form-group
             label Mobile Number *
             input(type="text" name="mobileNumber" value=businessman.mobileNumber || '' placeholder="0712345678" required)
+
+          .form-group
+            label TIN # (Optional)
+            input(type="text" name="tin" value=businessman.tin || '' placeholder="Tax Identification Number")
 
           .form-group
             label Type of Business *
@@ -60,9 +76,9 @@ block content
               placeholder="e.g. Retail Shop, Food Vendor" required)
 
         .form-actions
-          button#submitBtn.btn.btn-secondary.btn-lg(type="submit")
+          button#submitBtn.btn.btn-primary.btn-lg(type="submit")
             = isEdit ? '💾 Update Record' : '💾 Register Businessman'
-          a.btn.btn-outline(href="/dashboard") Cancel
+          a.btn.btn-outline(href="/businessmen") Cancel
 
   //- Success Modal
   #successModal.modal(style="display:none")
@@ -87,33 +103,53 @@ block content
         button.btn.btn-outline(onclick="closeModal('errorModal')") ✏️ Fix & Retry
 
 block scripts
-  - var bizId = businessman.id || ''
-  - var isEditMode = isEdit
+  - var locationsJson = JSON.stringify(locations.map(l => ({ id: l.id, blocks: l.blocks || [] })))
   script.
-    const IS_EDIT = !{JSON.stringify(isEdit)};
+    const IS_EDIT   = !{JSON.stringify(isEdit)};
     const RECORD_ID = !{JSON.stringify(businessman.id || '')};
+    const LOC_BLOCKS = !{locationsJson};
 
-    // NIN → Age auto-calculate
+    // ── Cascade: Location → Block dropdown ──
+    const locationSelect = document.getElementById('locationSelect');
+    const blockSelect    = document.getElementById('blockSelect');
+
+    function populateBlocks(locationId, selectedBlockId) {
+      const loc   = LOC_BLOCKS.find(l => l.id == locationId);
+      const blocks = loc ? loc.blocks : [];
+      blockSelect.innerHTML = '<option value="">— Select Block/Zone (optional) —</option>';
+      blocks.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.blockName;
+        if (selectedBlockId && b.id == selectedBlockId) opt.selected = true;
+        blockSelect.appendChild(opt);
+      });
+      blockSelect.disabled = blocks.length === 0;
+    }
+
+    // Init on page load (edit mode pre-fill)
+    populateBlocks(!{JSON.stringify(businessman.locationId || '')}, !{JSON.stringify(businessman.blockId || '')});
+
+    locationSelect.addEventListener('change', function() {
+      populateBlocks(this.value, null);
+    });
+
+    // ── NIN → Age ──
     document.getElementById('ninInput').addEventListener('input', function() {
       const nin = this.value;
       if (/^\d{8}/.test(nin)) {
-        const birthYear = parseInt(nin.substring(0, 4));
-        const currentYear = new Date().getFullYear();
-        const age = currentYear - birthYear;
+        const age = new Date().getFullYear() - parseInt(nin.substring(0, 4));
         if (age > 0 && age < 130) {
           document.getElementById('ageDisplay').value = age;
-          document.getElementById('ageHidden').value = age;
-        } else {
-          document.getElementById('ageDisplay').value = '';
-          document.getElementById('ageHidden').value = '';
+          document.getElementById('ageHidden').value  = age;
         }
       } else {
         document.getElementById('ageDisplay').value = '';
-        document.getElementById('ageHidden').value = '';
+        document.getElementById('ageHidden').value  = '';
       }
     });
 
-    // AJAX Form Submit
+    // ── AJAX Submit ──
     document.getElementById('bizForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const btn = document.getElementById('submitBtn');
@@ -122,42 +158,31 @@ block scripts
 
       const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
-
-      const url = IS_EDIT ? '/businessmen/' + RECORD_ID : '/businessmen';
+      const url    = IS_EDIT ? '/businessmen/' + RECORD_ID : '/businessmen';
       const method = IS_EDIT ? 'PUT' : 'POST';
 
       try {
         const response = await fetch(url, {
-          method: method,
-          headers: { 'Content-Type': 'application/json' },
+          method, headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
         const result = await response.json();
-
         if (result.success) {
           document.getElementById('successMessage').textContent = result.message;
           document.getElementById('successModal').style.display = 'flex';
-
-          // Countdown timer (only relevant for data entry; admin also benefits)
           let seconds = 10;
-          const countdownEl = document.getElementById('countdownText');
-          countdownEl.textContent = 'Redirecting in ' + seconds + ' seconds...';
+          const el = document.getElementById('countdownText');
+          el.textContent = 'Redirecting in ' + seconds + 's...';
           const timer = setInterval(() => {
             seconds--;
-            if (seconds <= 0) {
-              clearInterval(timer);
-              window.location.href = '/businessmen';
-            } else {
-              countdownEl.textContent = 'Redirecting in ' + seconds + ' seconds...';
-            }
+            if (seconds <= 0) { clearInterval(timer); window.location.href = '/businessmen'; }
+            else el.textContent = 'Redirecting in ' + seconds + 's...';
           }, 1000);
         } else {
           const ul = document.getElementById('errorList');
           ul.innerHTML = '';
           result.errors.forEach(err => {
-            const li = document.createElement('li');
-            li.textContent = err;
-            ul.appendChild(li);
+            const li = document.createElement('li'); li.textContent = err; ul.appendChild(li);
           });
           document.getElementById('errorModal').style.display = 'flex';
           btn.disabled = false;
@@ -171,6 +196,4 @@ block scripts
       }
     });
 
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }

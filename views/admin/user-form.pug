@@ -13,7 +13,7 @@ block content
     .section-card-header
       h2= isEdit ? 'Edit User Details' : 'Create New System User'
       if !isEdit
-        p.card-subtitle The default password will be the user's phone number. They will be required to change it on first login.
+        p.card-subtitle Default password = phone number. User must change it on first login.
     .section-card-body
       - var formAction = isEdit ? '/users/' + userData.id + '?_method=PUT' : '/users'
       form(action=formAction method="POST")
@@ -31,36 +31,51 @@ block content
 
           .form-group
             label Phone Number *
-            input#phoneInput(type="text" name="phoneNumber" value=userData.phoneNumber || '' 
-              placeholder="e.g. 0712345678" required)
+            input#phoneInput(type="text" name="phoneNumber" value=userData.phoneNumber || '' placeholder="e.g. 0712345678" required)
             if !isEdit
-              small.field-hint This will be used as the default password
+              small.field-hint This will be the default password
 
           .form-group
             label Role *
             select(name="role" required)
               option(value="") — Select Role —
-              option(value="admin" selected=(userData.role === 'admin')) 👑 Admin
+              option(value="admin"      selected=(userData.role === 'admin'))      👑 Admin
               option(value="data_entry" selected=(userData.role === 'data_entry')) ✏️ Data Entry
+              option(value="viewer"     selected=(userData.role === 'viewer'))     👁 Viewer (Read-Only)
 
           if !isEdit
             .form-group
               label Default Password (Auto-set)
-              input#defaultPwdDisplay(type="text" value="" placeholder="Will be set to phone number" disabled)
-              small.field-hint Read-only — automatically set to the phone number entered above
+              input#defaultPwdDisplay(type="text" value="" placeholder="Auto-filled from phone number" disabled)
 
           if isEdit
             .form-group
               label Account Status
               select(name="isActive")
-                option(value="1" selected=(userData.isActive)) Active
+                option(value="1" selected=(userData.isActive))  Active
                 option(value="0" selected=(!userData.isActive)) Inactive
 
           if isEdit
             .form-group
-              label Auto-generated Username
+              label Username (Read-only)
               input(type="text" value=userData.username disabled)
-              small.field-hint Username cannot be changed
+
+        .role-description
+          .role-desc-item
+            span.role-icon 👑
+            .role-desc-text
+              strong Admin
+              span — Full access: manage users, locations, blocks, businessmen, import, backups
+          .role-desc-item
+            span.role-icon ✏️
+            .role-desc-text
+              strong Data Entry
+              span — Add businessmen; view all records; cannot manage locations, users or backups
+          .role-desc-item
+            span.role-icon 👁
+            .role-desc-text
+              strong Viewer
+              span — View and print businessmen records only; cannot add or modify any data
 
         .form-actions
           button.btn.btn-primary.btn-lg(type="submit")
@@ -70,8 +85,6 @@ block content
 block scripts
   if !isEdit
     script.
-      const phoneInput = document.getElementById('phoneInput');
-      const pwdDisplay = document.getElementById('defaultPwdDisplay');
-      phoneInput.addEventListener('input', function() {
-        pwdDisplay.value = this.value ? this.value : '';
-      });
+      const phoneInput   = document.getElementById('phoneInput');
+      const pwdDisplay   = document.getElementById('defaultPwdDisplay');
+      phoneInput.addEventListener('input', function() { pwdDisplay.value = this.value; });

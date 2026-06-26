@@ -3,16 +3,16 @@ extends ../layout
 block content
   .page-header
     h1.page-title 📍 Business Locations
-    a.btn.btn-outline(href="/dashboard") ← Back to Dashboard
+    a.btn.btn-outline(href="/dashboard") ← Dashboard
 
   if error && error.length
-    .alert.alert-error= error[0]
+    .alert.alert-error ⚠️ #{error[0]}
   if success && success.length
-    .alert.alert-success= success[0]
+    .alert.alert-success ✓ #{success[0]}
 
   .section-card
     .section-card-header
-      h2 Add New Location
+      h2 ➕ Add New Location
     .section-card-body
       form.inline-form(action="/locations" method="POST")
         .form-row
@@ -23,7 +23,7 @@ block content
             label Ward *
             input(type="text" name="ward" placeholder="e.g. Kariakoo Ward" required)
           .form-group.form-action
-            button.btn.btn-secondary(type="submit") ➕ Add Location
+            button.btn.btn-primary(type="submit") ➕ Add Location
 
   h2.section-title All Locations (#{locations.length})
 
@@ -32,22 +32,70 @@ block content
       .empty-icon 📍
       p No locations registered yet. Add one above.
   else
-    .cards-grid
+    .locations-list
       each loc in locations
-        .location-card
-          .location-card-header
-            .location-icon 📍
-            .location-info
-              h3.location-name= loc.locationName
-              .location-ward 🏘️ #{loc.id} #{loc.ward} 
-          .location-card-body
-            .location-stat
-              span.stat-num= loc.businessmen ? loc.businessmen.length : 0
-              span.stat-lbl Businessmen
-            if loc.creator
-              .location-creator Added by: #{loc.creator.fullName}
-          .location-card-footer
-            form(action="/locations/" + loc.id + "?_method=DELETE" method="POST" 
-              onsubmit="return confirm('Delete this location? All associated businessmen will also be removed.')")
-              input(type="hidden" name="_method" value="DELETE")
-              button.btn.btn-danger.btn-sm(type="submit") 🗑 Delete
+        .location-full-card
+          .location-full-header
+            .lf-left
+              .location-icon 📍
+              .location-info
+                h3.location-name= loc.locationName
+                .location-ward 🏘️ #{loc.ward}
+            .lf-right
+              .lf-stats
+                span.lf-stat
+                  strong= loc.businessmen ? loc.businessmen.length : 0
+                  |  Businessmen
+                span.lf-stat
+                  strong= loc.blocks ? loc.blocks.length : 0
+                  |  Blocks/Zones
+              form(action="/locations/" + loc.id + "?_method=DELETE" method="POST"
+                onsubmit="return confirm('Delete this location and all its blocks/businessmen?')")
+                input(type="hidden" name="_method" value="DELETE")
+                button.btn.btn-danger.btn-sm(type="submit") 🗑 Delete Location
+
+          .location-full-body
+            //- Blocks section
+            .blocks-section
+              .blocks-header
+                h4.blocks-title 🔲 Blocks / Zones
+                button.btn.btn-sm.btn-outline.btn-add-block(
+                  type="button"
+                  data-loc=loc.id
+                  onclick="toggleAddBlock(this)") ➕ Add Block/Zone
+
+              //- Blocks list
+              if loc.blocks && loc.blocks.length > 0
+                .blocks-grid
+                  each blk in loc.blocks
+                    .block-chip
+                      span.block-chip-name= blk.blockName
+                      form.inline-form-del(
+                        action="/locations/" + loc.id + "/blocks/" + blk.id + "?_method=DELETE"
+                        method="POST"
+                        onsubmit="return confirm('Delete block \"' + '#{blk.blockName}' + '\"?')")
+                        input(type="hidden" name="_method" value="DELETE")
+                        button.block-chip-del(type="submit" title="Delete block") ✕
+              else
+                p.no-blocks-yet No blocks/zones added yet.
+
+              //- Add block inline form (hidden by default)
+              .add-block-form(id="add-block-form-" + loc.id style="display:none")
+                form.inline-form(action="/locations/" + loc.id + "/blocks" method="POST")
+                  .form-row
+                    .form-group
+                      input(type="text" name="blockName" placeholder="e.g. Block A, Zone 1, Section North" required)
+                    .form-group.form-action
+                      button.btn.btn-primary.btn-sm(type="submit") ✓ Save
+                      button.btn.btn-outline.btn-sm(type="button" onclick="toggleAddBlock(document.querySelector('[data-loc=\"#{loc.id}\"]'))") Cancel
+
+block scripts
+  script.
+    function toggleAddBlock(btn) {
+      const locId = btn.getAttribute('data-loc');
+      const form = document.getElementById('add-block-form-' + locId);
+      const isVisible = form.style.display !== 'none';
+      form.style.display = isVisible ? 'none' : 'block';
+      btn.textContent = isVisible ? '➕ Add Block/Zone' : '✕ Cancel';
+      if (!isVisible) form.querySelector('input[name="blockName"]').focus();
+    }
