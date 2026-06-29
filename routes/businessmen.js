@@ -4,13 +4,16 @@ const { Op } = require('sequelize');
 const { Businessman, Location, Block, User } = require('../models');
 const { requireAuth, requireAdmin, requireEditor } = require('../middleware/auth');
 
-// GET /businessmen - list with search/filter
+// GET /businessmen - list with search/filter + pagination
 router.get('/', requireAuth, async (req, res) => {
+  const PER_PAGE = 10;
   try {
     const search     = (req.query.search     || '').trim();
     const gender     = (req.query.gender     || '').trim();
     const locationId = (req.query.locationId || '').trim();
     const blockId    = (req.query.blockId    || '').trim();
+    const page       = Math.max(1, parseInt(req.query.page) || 1);
+    const offset     = (page - 1) * PER_PAGE;
 
     const andConditions = [];
     if (search) {
@@ -30,22 +33,28 @@ router.get('/', requireAuth, async (req, res) => {
 
     const where = andConditions.length > 0 ? { [Op.and]: andConditions } : {};
 
-    const businessmen = await Businessman.findAll({
+    // Count total matching rows, fetch only current page
+    const { count, rows } = await Businessman.findAndCountAll({
       where,
       include: [
         { model: Location, as: 'location', attributes: ['id', 'locationName', 'ward'] },
         { model: Block,    as: 'block',    attributes: ['id', 'blockName'] },
         { model: User,     as: 'registrar', attributes: ['fullName'] }
       ],
-      order: [['createdAt', 'DESC']]
+      order:  [['createdAt', 'DESC']],
+      limit:  PER_PAGE,
+      offset,
+      subQuery: false   // needed when includes have a limit
     });
+
+    const totalPages = Math.ceil(count / PER_PAGE);
+    const safePage   = Math.min(page, totalPages || 1);
 
     const locations = await Location.findAll({
       include: [{ model: Block, as: 'blocks', attributes: ['id', 'blockName'] }],
       order: [['locationName', 'ASC'], [{ model: Block, as: 'blocks' }, 'blockName', 'ASC']]
     });
 
-    // blocks for selected location (for filter dropdown)
     let filterBlocks = [];
     if (locationId && !isNaN(parseInt(locationId))) {
       filterBlocks = await Block.findAll({ where: { locationId: parseInt(locationId) }, order: [['blockName', 'ASC']] });
@@ -53,10 +62,20 @@ router.get('/', requireAuth, async (req, res) => {
 
     res.render('admin/businessmen', {
       title: 'Businessmen Registry',
-      businessmen: businessmen.map(b => b.toJSON()),
-      locations:   locations.map(l => l.toJSON()),
+      businessmen:  rows.map(b => b.toJSON()),
+      locations:    locations.map(l => l.toJSON()),
       filterBlocks: filterBlocks.map(b => b.toJSON()),
-      filters: { search, gender, locationId, blockId },
+      filters:      { search, gender, locationId, blockId },
+      pagination: {
+        page:       safePage,
+        totalPages,
+        total:      count,
+        perPage:    PER_PAGE,
+        hasNext:    safePage < totalPages,
+        hasPrev:    safePage > 1,
+        startItem:  count === 0 ? 0 : offset + 1,
+        endItem:    Math.min(offset + PER_PAGE, count)
+      },
       user:    req.session.user,
       error:   req.flash('error'),
       success: req.flash('success')
@@ -66,9 +85,10 @@ router.get('/', requireAuth, async (req, res) => {
     res.render('admin/businessmen', {
       title: 'Businessmen Registry',
       businessmen: [], locations: [], filterBlocks: [],
-      filters: { search: '', gender: '', locationId: '', blockId: '' },
-      user: req.session.user,
-      error: ['Failed to load records: ' + err.message], success: []
+      filters:    { search: '', gender: '', locationId: '', blockId: '' },
+      pagination: { page: 1, totalPages: 1, total: 0, perPage: PER_PAGE, hasNext: false, hasPrev: false, startItem: 0, endItem: 0 },
+      user:    req.session.user,
+      error:   ['Failed to load records: ' + err.message], success: []
     });
   }
 });

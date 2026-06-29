@@ -4,7 +4,7 @@ block content
   .page-header
     h1.page-title 👥 User Management
     a.btn.btn-primary(href="/users/add") ➕ Add New User
-    a.btn.btn-primary(href="/dashboard") 🏠 Back Home
+    a.btn.btn-outline(href="/dashboard") 🏠 Back Home
 
   if error && error.length
     .alert.alert-error ⚠️ #{error[0]}
@@ -49,8 +49,8 @@ block content
                   = u.mustChangePassword ? '⚠ Pending' : '✓ Set'
               td
                 .action-buttons
-                  a.btn.btn-sm.btn-view(href="/users/" + u.id) 👁
-                  a.btn.btn-sm.btn-edit(href="/users/" + u.id + "/edit") ✏️
+                  a.btn.btn-sm.btn-view(href="/users/" + u.id title='view') 👁
+                  a.btn.btn-sm.btn-edit(href="/users/" + u.id + "/edit" title='edit') ✏️
                   form.inline-form-del(action="/users/" + u.id + "/reset-password" method="POST"
                     onsubmit="return confirm('Reset password for #{u.fullName} to their phone number?')")
                     button.btn.btn-sm.btn-warn(type="submit" title="Reset Password") 🔄
