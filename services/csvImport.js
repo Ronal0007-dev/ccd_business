@@ -1,6 +1,6 @@
 /**
  * CSV Import Service — Businessman data
- * Supports up to 500 rows with validation, deduplication, and batch insert.
+ * Supports up to 5,000 rows per file with validation, deduplication, and batch insert.
  *
  * Required columns:  location_id, full_name, gender, nin, mobile_number, business_type
  * Optional columns:  block_name, cabin_number, tin
@@ -14,7 +14,7 @@ const { parse }      = require('csv-parse/sync');
 const { Businessman, Location, Block } = require('../models');
 const { Op }         = require('sequelize');
 
-const MAX_ROWS = 500;
+const MAX_ROWS = 5000;
 
 function normaliseHeader(h) {
   const s = h.toLowerCase().trim().replace(/\s+/g, '_');
@@ -114,9 +114,23 @@ async function processCSV(fileBuffer, registeredBy) {
     blockLookup[key] = b.id;
   });
 
-  // Existing NINs
+  // Existing NINs — only check the NINs actually present in THIS csv file,
+  // not the whole table. With 5000+ records, pulling every nin into memory
+  // on every import is wasteful; a targeted WHERE IN (...) is fast at any scale.
+  const ninsInFile = records
+    .map(r => {
+      const d = {};
+      Object.entries(r).forEach(([k, v]) => { if (headerMap[k]) d[headerMap[k]] = v; });
+      return (d.nin || '').trim();
+    })
+    .filter(Boolean);
+
   const existingNins = new Set(
-    (await Businessman.findAll({ attributes: ['nin'], raw: true })).map(b => b.nin)
+    (await Businessman.findAll({
+      attributes: ['nin'],
+      where: { nin: { [Op.in]: ninsInFile } },
+      raw: true
+    })).map(b => b.nin)
   );
 
   // ── Row validation ──────────────────────────────────────
@@ -206,8 +220,10 @@ async function processCSV(fileBuffer, registeredBy) {
     });
   }
 
-  // ── Batch insert in chunks of 50 ────────────────────────
-  const CHUNK = 50;
+  // ── Batch insert in chunks of 250 ───────────────────────
+  // Larger chunks reduce round-trips to MySQL while staying well under
+  // the default max_allowed_packet size for typical row widths.
+  const CHUNK = 250;
   for (let i = 0; i < toInsert.length; i += CHUNK) {
     await Businessman.bulkCreate(toInsert.slice(i, i + CHUNK), { validate: false });
     results.inserted += Math.min(CHUNK, toInsert.length - i);

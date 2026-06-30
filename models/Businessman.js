@@ -17,6 +17,25 @@ const Businessman = sequelize.define('Businessman', {
   mobileNumber: { type: DataTypes.STRING(20), allowNull: false },
   businessType: { type: DataTypes.STRING(150), allowNull: false },
   registeredBy: { type: DataTypes.INTEGER, allowNull: false }
-}, { tableName: 'businessmen' });
+}, {
+  tableName: 'businessmen',
+  indexes: [
+    // Speeds up location/block filter dropdowns and counts
+    { fields: ['locationId'] },
+    { fields: ['blockId'] },
+    // Speeds up gender filter
+    { fields: ['gender'] },
+    // Speeds up "registered by" lookups (used in views + reports)
+    { fields: ['registeredBy'] },
+    // Speeds up default sort order (createdAt DESC) used on every list page
+    { fields: ['createdAt'] },
+    // Composite index for the most common combined filter (location + gender)
+    { fields: ['locationId', 'gender'] },
+    // Speeds up name searches (LIKE 'x%' can use this prefix index in MySQL)
+    { fields: ['fullName'] },
+    { fields: ['mobileNumber'] },
+    { fields: ['businessType'] }
+  ]
+});
 
 module.exports = Businessman;

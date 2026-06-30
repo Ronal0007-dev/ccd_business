@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const { Businessman, Location, Block, User } = require('../models');
 const { requireAuth, requireAdmin, requireEditor } = require('../middleware/auth');
 
-// GET /businessmen - list with search/filter + pagination
+// GET /businessmen - list with search/filter + pagination / universal print bypass
 router.get('/', requireAuth, async (req, res) => {
   const PER_PAGE = 10;
   try {
@@ -14,6 +14,9 @@ router.get('/', requireAuth, async (req, res) => {
     const blockId    = (req.query.blockId    || '').trim();
     const page       = Math.max(1, parseInt(req.query.page) || 1);
     const offset     = (page - 1) * PER_PAGE;
+    
+    // --- NEW: Detect print/bypass mode ---
+    const bypassPagination = req.query.limit === 'all';
 
     const andConditions = [];
     if (search) {
@@ -33,8 +36,8 @@ router.get('/', requireAuth, async (req, res) => {
 
     const where = andConditions.length > 0 ? { [Op.and]: andConditions } : {};
 
-    // Count total matching rows, fetch only current page
-    const { count, rows } = await Businessman.findAndCountAll({
+    // --- MODIFIED: Query configuration conditionally strips limits ---
+    const queryOptions = {
       where,
       include: [
         { model: Location, as: 'location', attributes: ['id', 'locationName', 'ward'] },
@@ -42,22 +45,34 @@ router.get('/', requireAuth, async (req, res) => {
         { model: User,     as: 'registrar', attributes: ['fullName'] }
       ],
       order:  [['createdAt', 'DESC']],
-      limit:  PER_PAGE,
-      offset,
       subQuery: false   // needed when includes have a limit
-    });
+    };
+
+    // Apply pagination variables only if we are NOT bypassing it
+    if (!bypassPagination) {
+      queryOptions.limit = PER_PAGE;
+      queryOptions.offset = offset;
+    }
+
+    // Count total matching rows and fetch dataset matching config
+    const { count, rows } = await Businessman.findAndCountAll(queryOptions);
 
     const totalPages = Math.ceil(count / PER_PAGE);
     const safePage   = Math.min(page, totalPages || 1);
 
+    // Lightweight database fetch for dropdowns
     const locations = await Location.findAll({
-      include: [{ model: Block, as: 'blocks', attributes: ['id', 'blockName'] }],
-      order: [['locationName', 'ASC'], [{ model: Block, as: 'blocks' }, 'blockName', 'ASC']]
+      attributes: ['id', 'locationName', 'ward'],
+      order: [['locationName', 'ASC']]
     });
 
     let filterBlocks = [];
     if (locationId && !isNaN(parseInt(locationId))) {
-      filterBlocks = await Block.findAll({ where: { locationId: parseInt(locationId) }, order: [['blockName', 'ASC']] });
+      filterBlocks = await Block.findAll({
+        where: { locationId: parseInt(locationId) },
+        attributes: ['id', 'blockName'],
+        order: [['blockName', 'ASC']]
+      });
     }
 
     res.render('admin/businessmen', {
@@ -66,15 +81,16 @@ router.get('/', requireAuth, async (req, res) => {
       locations:    locations.map(l => l.toJSON()),
       filterBlocks: filterBlocks.map(b => b.toJSON()),
       filters:      { search, gender, locationId, blockId },
+      // --- MODIFIED: Pagination payload scales dynamically if bypassed ---
       pagination: {
         page:       safePage,
         totalPages,
         total:      count,
-        perPage:    PER_PAGE,
-        hasNext:    safePage < totalPages,
-        hasPrev:    safePage > 1,
-        startItem:  count === 0 ? 0 : offset + 1,
-        endItem:    Math.min(offset + PER_PAGE, count)
+        perPage:    bypassPagination ? count : PER_PAGE,
+        hasNext:    bypassPagination ? false : safePage < totalPages,
+        hasPrev:    bypassPagination ? false : safePage > 1,
+        startItem:  count === 0 ? 0 : (bypassPagination ? 1 : offset + 1),
+        endItem:    bypassPagination ? count : Math.min(offset + PER_PAGE, count)
       },
       user:    req.session.user,
       error:   req.flash('error'),

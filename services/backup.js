@@ -40,16 +40,24 @@ async function runBackup() {
     };
 
     fs.writeFileSync(filepath, JSON.stringify(payload, null, 2), 'utf8');
+
+    // Write a tiny sidecar metadata file so listBackups() never has to
+    // parse the full (potentially multi-MB) backup JSON just to show counts.
+    const metaPath = path.join(BACKUP_DIR, `backup-${timestamp}.meta.json`);
+    fs.writeFileSync(metaPath, JSON.stringify({ counts: payload.counts, exportedAt: payload.exportedAt }), 'utf8');
+
     console.log(`✅ Backup created: ${filename} (${businessmen.length} businessmen, ${locations.length} locations)`);
 
-    // Purge old backups — keep only the latest MAX_BACKUPS
+    // Purge old backups — keep only the latest MAX_BACKUPS (and their sidecar meta files)
     const files = fs.readdirSync(BACKUP_DIR)
-      .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+      .filter(f => f.startsWith('backup-') && f.endsWith('.json') && !f.endsWith('.meta.json'))
       .map(f => ({ name: f, mtime: fs.statSync(path.join(BACKUP_DIR, f)).mtime }))
       .sort((a, b) => b.mtime - a.mtime);
 
     files.slice(MAX_BACKUPS).forEach(f => {
       fs.unlinkSync(path.join(BACKUP_DIR, f.name));
+      const meta = f.name.replace(/\.json$/, '.meta.json');
+      if (fs.existsSync(path.join(BACKUP_DIR, meta))) fs.unlinkSync(path.join(BACKUP_DIR, meta));
       console.log(`🗑  Purged old backup: ${f.name}`);
     });
 
@@ -63,16 +71,25 @@ async function runBackup() {
 function listBackups() {
   if (!fs.existsSync(BACKUP_DIR)) return [];
   return fs.readdirSync(BACKUP_DIR)
-    .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+    .filter(f => f.startsWith('backup-') && f.endsWith('.json') && !f.endsWith('.meta.json'))
     .map(f => {
-      const stat = fs.statSync(path.join(BACKUP_DIR, f));
-      const data = JSON.parse(fs.readFileSync(path.join(BACKUP_DIR, f), 'utf8'));
+      const stat     = fs.statSync(path.join(BACKUP_DIR, f));
+      const metaPath = path.join(BACKUP_DIR, f.replace(/\.json$/, '.meta.json'));
+      let counts = {};
+      if (fs.existsSync(metaPath)) {
+        // Tiny file — safe and fast to parse even with thousands of backups
+        try { counts = JSON.parse(fs.readFileSync(metaPath, 'utf8')).counts || {}; } catch (_) {}
+      } else {
+        // Legacy backup created before sidecar metadata existed — fall back
+        // to parsing the full file just this once (older backups only).
+        try { counts = JSON.parse(fs.readFileSync(path.join(BACKUP_DIR, f), 'utf8')).counts || {}; } catch (_) {}
+      }
       return {
-        filename: f,
+        filename:  f,
         filepath:  path.join(BACKUP_DIR, f),
         size:      (stat.size / 1024).toFixed(1) + ' KB',
         createdAt: stat.mtime,
-        counts:    data.counts || {}
+        counts
       };
     })
     .sort((a, b) => b.createdAt - a.createdAt);

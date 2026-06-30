@@ -6,6 +6,11 @@ const Block = sequelize.define('Block', {
   locationId: { type: DataTypes.INTEGER, allowNull: false },
   blockName: { type: DataTypes.STRING(100), allowNull: false },
   createdBy: { type: DataTypes.INTEGER, allowNull: true }
-}, { tableName: 'blocks' });
+}, {
+  tableName: 'blocks',
+  indexes: [
+    { fields: ['locationId'] }
+  ]
+});
 
 module.exports = Block;

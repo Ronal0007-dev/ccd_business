@@ -8,7 +8,7 @@ const { Location, Block }      = require('../models');
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits:  { fileSize: 5 * 1024 * 1024 },
+  limits:  { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (path.extname(file.originalname).toLowerCase() !== '.csv')
       return cb(new Error('Only .csv files are allowed.'));

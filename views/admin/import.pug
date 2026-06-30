@@ -3,7 +3,7 @@ extends ../layout
 block content
   .page-header
     h1.page-title 📥 CSV Import — Businessmen
-    a.btn.btn-outline(href="/businessmen") ← Back to List
+    a.btn.btn-outline(href="/dashboard") ← Dashboard
 
   if error && error.length
     .alert.alert-error ⚠️ #{error[0]}
@@ -31,14 +31,18 @@ block content
         .result-section
           h4.result-section-title ❌ Errors / Skipped (#{result.errors.length})
           .result-list
-            each e in result.errors
+            each e in result.errors.slice(0, 200)
               .result-list-item.item-error= e
+          if result.errors.length > 200
+            p.result-truncated-note Showing first 200 of #{result.errors.length} errors. Fix the issues above, re-export, and re-upload.
       if result.warnings && result.warnings.length
         .result-section
           h4.result-section-title ⚠️ Warnings (#{result.warnings.length})
           .result-list
-            each w in result.warnings
+            each w in result.warnings.slice(0, 200)
               .result-list-item.item-warn= w
+          if result.warnings.length > 200
+            p.result-truncated-note Showing first 200 of #{result.warnings.length} warnings.
       if result.inserted > 0
         .result-actions
           a.btn.btn-primary(href="/businessmen") 📋 View All Businessmen
@@ -47,7 +51,7 @@ block content
   .section-card
     .section-card-header
       h2 Upload CSV File
-      p.card-subtitle Maximum #{500} rows per file · Only .csv files accepted · Max 5 MB
+      p.card-subtitle Maximum #{5000} rows per file · Only .csv files accepted · Max 10 MB
     .section-card-body
       form#importForm(action="/import" method="POST" enctype="multipart/form-data")
         .upload-zone#dropZone
@@ -55,7 +59,7 @@ block content
           .upload-text
             strong Click to select a CSV file
             span  or drag and drop here
-          .upload-hint .csv only &nbsp;|&nbsp; max 5 MB &nbsp;|&nbsp; up to 500 rows
+          .upload-hint .csv only &nbsp;|&nbsp; max 10 MB &nbsp;|&nbsp; up to 5,000 rows
           input#csvFile(type="file" name="csvFile" accept=".csv" required)
         #filePreview.file-preview(style="display:none")
           .file-preview-icon 📄

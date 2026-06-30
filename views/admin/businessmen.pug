@@ -17,7 +17,8 @@ block content
       if user.role !== 'viewer'
         a.btn.btn-primary(href="/businessmen/add") ➕ Add New
       if user.role === 'admin' || user.role === 'viewer'
-        button.btn.btn-print(onclick="window.print()") 🖨 Print
+        //- MODIFIED: Replaced window.print() with a custom JavaScript print handler
+        button.btn.btn-print(onclick="prepareAndPrint()") 🖨 Print
 
   if error && error.length
     .alert.alert-error ⚠️ #{error[0]}
@@ -185,6 +186,29 @@ block head
 block scripts
   script.
     const TOTAL_PAGES = !{JSON.stringify(pg.totalPages)};
+
+    // --- NEW PRINT LOGIC ---
+    // 1. Triggers bypass by converting current window view over to 'limit=all'
+    function prepareAndPrint() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('limit', 'all'); // Signals backend to ignore page rules
+      url.searchParams.set('print', 'true'); // Signals script below to open dialog
+      window.location.href = url.toString();
+    }
+
+    // 2. Executes on page load to open print dialog and restore standard state seamlessly
+    window.addEventListener('DOMContentLoaded', () => {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('print') === 'true') {
+        window.print();
+        
+        // Clean up url parameters and send user back to normal pagination view
+        url.searchParams.delete('limit');
+        url.searchParams.delete('print');
+        window.location.href = url.toString();
+      }
+    });
+    // --- END PRINT LOGIC ---
 
     // Search: submit on Enter only, reset to page 1
     const searchInput = document.getElementById('searchInput');
